@@ -1,0 +1,2592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EIP·SCOPE — Carbon Footprint Tool for Eco-Industrial Parks</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --blue: #009FE3;
+  --blue-dark: #0077B6;
+  --blue-deeper: #023E8A;
+  --orange: #F47920;
+  --orange-light: #FFB347;
+  --green: #8DC63F;
+  --green-dark: #5A8C1A;
+  --white: #FFFFFF;
+  --off-white: #F5F7FA;
+  --gray-light: #E8ECF0;
+  --gray: #94A3B8;
+  --gray-dark: #475569;
+  --text: #1E293B;
+  --text-light: #64748B;
+  --danger: #EF4444;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --card-shadow: 0 4px 24px rgba(0,159,227,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* NODE BACKGROUND PATTERN */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle at 20% 20%, rgba(0,159,227,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(141,198,63,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* HEADER */
+.header {
+  background: var(--blue-deeper);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 400px; height: 100%;
+  background: linear-gradient(135deg, transparent 40%, rgba(0,159,227,0.15) 100%);
+  pointer-events: none;
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.brand-logos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 20px;
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+
+.brand-logo-text {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.brand-title-block {
+  padding-left: 4px;
+}
+
+.brand-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.brand-name span { color: var(--green); }
+.brand-dot { color: var(--orange); }
+
+.brand-subtitle-en {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.brand-subtitle-es {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-toggle {
+  display: flex;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lang-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.6);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+
+.lang-btn.active {
+  background: var(--blue);
+  color: white;
+}
+
+.btn-help {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(244,121,32,0.15);
+  border: 1px solid rgba(244,121,32,0.4);
+  border-radius: 8px;
+  color: var(--orange-light);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-help:hover {
+  background: rgba(244,121,32,0.25);
+  color: white;
+}
+
+/* MAIN CONTENT */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HERO SECTION */
+.hero {
+  background: var(--blue-deeper);
+  border-radius: var(--radius);
+  padding: 48px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  border: 40px solid rgba(141,198,63,0.08);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; right: 80px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 25px solid rgba(0,159,227,0.1);
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(141,198,63,0.15);
+  border: 1px solid rgba(141,198,63,0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-family: 'Space Mono', monospace;
+}
+
+.hero-title {
+  font-size: 36px;
+  font-weight: 600;
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.hero-title-es {
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.7;
+  max-width: 600px;
+  margin-bottom: 32px;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-primary:hover { background: #0077B6; transform: translateY(-1px); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+.btn-orange {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-orange:hover { background: #E06810; transform: translateY(-1px); }
+
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.btn-green:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+/* INSTRUCTIONS */
+.instructions {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 32px;
+  box-shadow: var(--card-shadow);
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.section-title-es {
+  font-size: 13px;
+  color: var(--text-light);
+  font-style: italic;
+  font-weight: 300;
+  margin-bottom: 24px;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.step-card {
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--off-white);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-light);
+  position: relative;
+  transition: all 0.2s;
+}
+
+.step-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+
+.step-num {
+  width: 40px; height: 40px;
+  background: var(--blue-deeper);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  margin: 0 auto 14px;
+}
+
+.step-icon { font-size: 28px; margin-bottom: 10px; }
+
+.step-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.step-title-es {
+  font-size: 11px;
+  color: var(--text-light);
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.step-desc {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+.notice-box {
+  background: rgba(0,159,227,0.06);
+  border: 1px solid rgba(0,159,227,0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--blue-dark);
+  line-height: 1.6;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--gray-light);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.card-title-block {}
+.card-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.card-title-es { font-size: 12px; color: var(--text-light); font-style: italic; font-weight: 300; margin-top: 2px; }
+
+.card-badge {
+  background: var(--blue-deeper);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* FORM */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.form-full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-label-es {
+  font-size: 11px;
+  color: var(--text-light);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.form-input, .form-select, .form-textarea {
+  padding: 11px 14px;
+  border: 1.5px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: white;
+  transition: border-color 0.2s;
+  outline: none;
+  width: 100%;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,159,227,0.1);
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--gray);
+  line-height: 1.4;
+}
+
+/* COUNTRY SELECTOR */
+.country-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.country-opt {
+  padding: 16px;
+  border: 2px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.country-opt:hover { border-color: var(--blue); }
+.country-opt.active { border-color: var(--blue); background: rgba(0,159,227,0.06); }
+
+.country-opt-flag { font-size: 28px; margin-bottom: 6px; }
+.country-opt-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.country-opt-note { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+
+/* EMPRESA CARDS */
+.empresa-list { display: flex; flex-direction: column; gap: 16px; }
+
+.empresa-card {
+  border: 1.5px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.empresa-card.active { border-color: var(--blue); }
+
+.empresa-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--off-white);
+  cursor: pointer;
+}
+
+.empresa-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.empresa-num {
+  width: 28px; height: 28px;
+  background: var(--blue-deeper);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+}
+
+.empresa-name-display { font-size: 14px; font-weight: 600; color: var(--text); }
+.empresa-sector-display { font-size: 12px; color: var(--text-light); }
+
+.empresa-card-toggle {
+  font-size: 18px;
+  color: var(--gray);
+  transition: transform 0.2s;
+}
+
+.empresa-card.active .empresa-card-toggle { transform: rotate(180deg); }
+
+.empresa-card-body {
+  padding: 20px;
+  display: none;
+  border-top: 1px solid var(--gray-light);
+}
+
+.empresa-card.active .empresa-card-body { display: block; }
+
+/* OPTIONAL SECTION */
+.optional-notice {
+  background: rgba(244,121,32,0.06);
+  border: 1.5px dashed rgba(244,121,32,0.4);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  margin: 20px 0;
+}
+
+.optional-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--orange);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+}
+
+.optional-text {
+  font-size: 13px;
+  color: var(--orange);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.optional-text-es {
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ALCANCE SECTIONS */
+.alcance-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 20px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.alcance-badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+}
+
+.alcance-1 { background: rgba(239,68,68,0.1); color: #DC2626; }
+.alcance-2 { background: rgba(0,159,227,0.1); color: var(--blue-dark); }
+.alcance-3 { background: rgba(141,198,63,0.1); color: var(--green-dark); }
+
+/* RESULTS */
+.results-section { display: none; }
+.results-section.visible { display: block; }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: white;
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  border: 1px solid var(--gray-light);
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--blue-deeper);
+  font-family: 'Space Mono', monospace;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-unit {
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+/* INDICATOR PEI */
+.indicator-pei {
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.indicator-pei.cumple { background: rgba(34,197,94,0.08); border: 1.5px solid rgba(34,197,94,0.3); }
+.indicator-pei.no-cumple { background: rgba(239,68,68,0.06); border: 1.5px solid rgba(239,68,68,0.25); }
+
+.indicator-icon { font-size: 40px; flex-shrink: 0; }
+
+.indicator-body { flex: 1; }
+.indicator-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.indicator-desc { font-size: 13px; color: var(--text-light); line-height: 1.5; }
+
+.indicator-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cumple .indicator-pct { color: var(--success); }
+.no-cumple .indicator-pct { color: var(--danger); }
+
+/* PARETO TABLE */
+.pareto-table { width: 100%; border-collapse: collapse; }
+.pareto-table th {
+  background: var(--blue-deeper);
+  color: white;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: 0.04em;
+}
+
+.pareto-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--gray-light);
+}
+
+.pareto-table tr:hover td { background: var(--off-white); }
+
+.pareto-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.dot-green { background: var(--success); }
+.dot-amber { background: var(--warning); }
+.dot-gray { background: var(--gray); }
+
+/* CHART CONTAINER */
+.chart-container {
+  position: relative;
+  height: 320px;
+  margin: 20px 0;
+}
+
+/* PDF DOWNLOAD */
+.pdf-section {
+  background: var(--blue-deeper);
+  border-radius: var(--radius);
+  padding: 36px;
+  color: white;
+  margin-bottom: 24px;
+}
+
+.pdf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pdf-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+}
+
+.pdf-card-title { font-size: 15px; font-weight: 600; color: white; margin-bottom: 6px; }
+.pdf-card-desc { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 16px; line-height: 1.5; }
+
+.pdf-lang-btns { display: flex; gap: 8px; }
+
+.btn-pdf {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  text-align: center;
+}
+
+.btn-pdf:hover { background: var(--blue); border-color: var(--blue); }
+
+.btn-pdf-es { border-color: rgba(244,121,32,0.5); }
+.btn-pdf-es:hover { background: var(--orange); border-color: var(--orange); }
+
+/* SURVEY */
+.survey-section {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--gray-light);
+  display: none;
+}
+
+.survey-section.visible { display: block; }
+
+.survey-q { margin-bottom: 20px; }
+.survey-q-text { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+.survey-stars { display: flex; gap: 8px; }
+
+.star-btn {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-btn:hover, .star-btn.active { background: var(--blue); border-color: var(--blue); }
+
+/* LINKS SECTION */
+.links-section {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-bottom: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--gray-light);
+}
+
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.link-card {
+  padding: 16px;
+  border: 1px solid var(--gray-light);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: all 0.2s;
+  display: block;
+}
+
+.link-card:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,159,227,0.1); }
+
+.link-card-tag {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.link-card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+.link-card-url { font-size: 11px; color: var(--blue); }
+
+/* DEMO MODE */
+.demo-banner {
+  background: rgba(244,121,32,0.1);
+  border: 2px dashed var(--orange);
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--orange);
+}
+
+.demo-banner.visible { display: flex; }
+
+/* PROGRESS BAR */
+.progress-bar {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--gray-light);
+}
+
+.progress-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.progress-step-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--gray-light);
+  color: var(--gray);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.progress-step.done .progress-step-num { background: var(--green); color: white; }
+.progress-step.active .progress-step-num { background: var(--blue); color: white; }
+
+.progress-step-label {
+  font-size: 11px;
+  color: var(--gray);
+  margin-left: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.progress-step.active .progress-step-label { color: var(--blue); font-weight: 600; }
+.progress-step.done .progress-step-label { color: var(--green-dark); }
+
+.progress-line {
+  flex: 1;
+  height: 2px;
+  background: var(--gray-light);
+  margin: 0 8px;
+  transition: background 0.3s;
+}
+
+.progress-line.done { background: var(--green); }
+
+/* FOOTER */
+.footer {
+  background: var(--blue-deeper);
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  margin-top: 40px;
+}
+
+.footer a { color: var(--blue); text-decoration: none; }
+.footer a:hover { color: white; }
+
+/* UTILS */
+.divider { height: 1px; background: var(--gray-light); margin: 20px 0; }
+.text-center { text-align: center; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.gap-12 { gap: 12px; }
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+.tag-green {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: rgba(141,198,63,0.12);
+  border: 1px solid rgba(141,198,63,0.3);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green-dark);
+  font-family: 'Space Mono', monospace;
+}
+
+.tag-blue {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: rgba(0,159,227,0.1);
+  border: 1px solid rgba(0,159,227,0.3);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue-dark);
+  font-family: 'Space Mono', monospace;
+}
+
+@media (max-width: 768px) {
+  .main { padding: 20px 16px; }
+  .form-grid, .form-grid-3, .metrics-grid, .steps-grid, .pdf-grid, .links-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero { padding: 28px 20px; }
+  .hero-title { font-size: 24px; }
+  .country-selector { grid-template-columns: 1fr 1fr; }
+  .header-inner { flex-wrap: wrap; gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <div class="brand-logos">
+        <div class="brand-logo-text">GEIPP<br>ONUDI</div>
+      </div>
+      <div class="brand-title-block">
+        <div class="brand-name">EIP<span class="brand-dot">·</span>SCOPE</div>
+        <div class="brand-subtitle-en">Carbon Footprint Tool for Eco-Industrial Parks</div>
+        <div class="brand-subtitle-es">Herramienta de Huella de Carbono para Parques Eco-Industriales</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('es')" id="btn-es">ES</button>
+        <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+      </div>
+      <a href="mailto:j.salazarespitia@unido.org?subject=EIP·SCOPE - Request for Support&body=Hello, I need support with EIP·SCOPE.%0A%0AName:%0AOrganization:%0APark:%0AQuery:" class="btn-help">
+        ✉ <span id="txt-help">Contactar soporte</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- DEMO BANNER -->
+  <div class="demo-banner" id="demo-banner">
+    🧪 <span id="txt-demo-banner">MODO DEMOSTRACIÓN — Los datos mostrados son ficticios. Solo para explorar la herramienta.</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">🌿 GEIPP · ONUDI · ISO 14064-1</div>
+    <h1 class="hero-title" id="txt-hero-title">Carbon Footprint Calculator<br>for Eco-Industrial Parks</h1>
+    <div class="hero-title-es" id="txt-hero-title-es">Calculadora de Huella de Carbono para Parques Eco-Industriales</div>
+    <p class="hero-desc" id="txt-hero-desc">Measure Scope 1, 2 and 3 GHG emissions of your industrial park and its resident companies. Generate professional reports aligned with ISO 14064-1, GRI Standards, and the International EIP Framework (UNIDO·World Bank·GIZ).</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="startTool()" id="btn-start">🚀 <span id="txt-start">Start measurement</span></button>
+      <button class="btn-secondary" onclick="loadDemo()" id="btn-demo">🧪 <span id="txt-demo">View demo (5 companies)</span></button>
+      <a href="https://www.unido.org/our-focus/advancing-economic-competitiveness/competitive-trade-capacities-and-corporate-responsibility/environment/eco-industrial-parks" target="_blank" class="btn-secondary" id="btn-marco">📄 <span id="txt-marco">International EIP Framework</span></a>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS -->
+  <div class="instructions" id="instructions-section">
+    <div class="section-title" id="txt-instr-title">How does it work?</div>
+    <div class="section-title-es" id="txt-instr-title-es">¿Cómo funciona? · Single session — have your data ready before starting</div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-icon">🏭</div>
+        <div class="step-title" id="txt-step1">Park data</div>
+        <div class="step-title-es" id="txt-step1-es">Datos del parque</div>
+        <div class="step-desc" id="txt-step1-desc">Name, country, year, number of companies and methodology (Colombia/International)</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-icon">🏢</div>
+        <div class="step-title" id="txt-step2">Company data</div>
+        <div class="step-title-es" id="txt-step2-es">Datos por empresa</div>
+        <div class="step-desc" id="txt-step2-desc">Sector, employees, area, energy consumption, fuels and energy certifications</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-icon">📊</div>
+        <div class="step-title" id="txt-step3">Automatic calculation</div>
+        <div class="step-title-es" id="txt-step3-es">Cálculo automático</div>
+        <div class="step-desc" id="txt-step3-desc">tCO₂eq per company and total park, EIP indicator, Pareto analysis and bubble chart</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-icon">📄</div>
+        <div class="step-title" id="txt-step4">Download reports</div>
+        <div class="step-title-es" id="txt-step4-es">Descarga informes</div>
+        <div class="step-desc" id="txt-step4-desc">Consolidated park PDF + individual per company, in Spanish or English</div>
+      </div>
+    </div>
+    <div class="notice-box">
+      ⚠️ <strong id="txt-notice-title">Single session:</strong> <span id="txt-notice-body">This tool does not store data between sessions. Have all company information ready before starting. Download your reports at the end.</span>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar" id="progress-bar" style="display:none">
+    <div class="progress-steps">
+      <div class="progress-step active" id="ps1">
+        <div class="progress-step-num">1</div>
+        <div class="progress-step-label" id="txt-ps1">Park</div>
+      </div>
+      <div class="progress-line" id="pl1"></div>
+      <div class="progress-step" id="ps2">
+        <div class="progress-step-num">2</div>
+        <div class="progress-step-label" id="txt-ps2">Companies</div>
+      </div>
+      <div class="progress-line" id="pl2"></div>
+      <div class="progress-step" id="ps3">
+        <div class="progress-step-num">3</div>
+        <div class="progress-step-label" id="txt-ps3">Results</div>
+      </div>
+      <div class="progress-line" id="pl3"></div>
+      <div class="progress-step" id="ps4">
+        <div class="progress-step-num">4</div>
+        <div class="progress-step-label" id="txt-ps4">Reports</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: PARK DATA -->
+  <div class="card" id="step1-section" style="display:none">
+    <div class="card-header">
+      <div class="card-title-block">
+        <div class="card-title" id="txt-card1-title">Industrial Park Data</div>
+        <div class="card-title-es" id="txt-card1-sub">Datos del Parque Industrial</div>
+      </div>
+      <div class="card-badge">STEP 1 · PASO 1</div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label" id="txt-park-name">Park name <span class="form-label-es">/ Nombre del parque</span></label>
+        <input type="text" id="parkName" class="form-input" placeholder="e.g. Parque Industrial PIMSA">
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="txt-year">Reporting year <span class="form-label-es">/ Año de reporte</span></label>
+        <input type="number" id="reportYear" class="form-input" placeholder="2024" min="2000" max="2030" value="2024">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label">Country / <span class="form-label-es">País</span></label>
+        <div class="country-selector">
+          <div class="country-opt active" onclick="selectCountry('co')" id="opt-co">
+            <div class="country-opt-flag">🇨🇴</div>
+            <div class="country-opt-name">Colombia</div>
+            <div class="country-opt-note">UPME emission factors · Factores UPME</div>
+          </div>
+          <div class="country-opt" onclick="selectCountry('int')" id="opt-int">
+            <div class="country-opt-flag">🌎</div>
+            <div class="country-opt-name">International · Internacional</div>
+            <div class="country-opt-note">IPCC AR6 emission factors</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="txt-total-emp">Total companies in park <span class="form-label-es">/ Total empresas en el parque</span></label>
+        <input type="number" id="totalEmpresas" class="form-input" placeholder="20" min="1" onchange="updateRepresentativity()">
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="txt-reporting-emp">Companies that will report <span class="form-label-es">/ Empresas que van a reportar</span></label>
+        <input type="number" id="reportingEmpresas" class="form-input" placeholder="15" min="1" onchange="updateRepresentativity()">
+      </div>
+      <div class="form-group form-full">
+        <label class="form-label" id="txt-reason">Reason why remaining companies do not report <span class="form-label-es">/ Motivo por el que las demás empresas no reportan</span></label>
+        <textarea id="reasonNoReport" class="form-textarea" rows="3" placeholder="e.g. Lack of data, participation still pending, company closed during reporting period..."></textarea>
+      </div>
+    </div>
+
+    <div id="representativity-box" class="notice-box mt-16" style="display:none">
+      <span id="txt-rep"></span>
+    </div>
+
+    <div class="mt-24">
+      <button class="btn-primary" onclick="goToStep2()" id="btn-next1">Continue → Add Companies</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: COMPANIES -->
+  <div class="card" id="step2-section" style="display:none">
+    <div class="card-header">
+      <div class="card-title-block">
+        <div class="card-title" id="txt-card2-title">Resident Company Data</div>
+        <div class="card-title-es" id="txt-card2-sub">Datos de Empresas Residentes</div>
+      </div>
+      <div class="card-badge" id="badge-step2">STEP 2 · PASO 2</div>
+    </div>
+
+    <div class="empresa-list" id="empresa-list"></div>
+
+    <div class="mt-24 flex gap-12">
+      <button class="btn-secondary" onclick="goToStep1()">← <span id="txt-back1">Back</span></button>
+      <button class="btn-primary" onclick="calculateAll()" id="btn-calculate">📊 <span id="txt-calculate">Calculate Footprint</span></button>
+    </div>
+  </div>
+
+  <!-- STEP 3: RESULTS -->
+  <div class="results-section" id="results-section">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title-block">
+          <div class="card-title" id="txt-results-title">Results · Carbon Footprint</div>
+          <div class="card-title-es" id="txt-results-sub">Resultados · Huella de Carbono</div>
+        </div>
+        <div class="card-badge">STEP 3 · PASO 3</div>
+      </div>
+
+      <div class="metrics-grid" id="metrics-grid"></div>
+
+      <!-- INDICATOR PEI -->
+      <div id="indicator-pei-box"></div>
+
+      <!-- BUBBLE CHART -->
+      <div class="section-title mt-24" id="txt-chart-title">Emissions by company · Emisiones por empresa</div>
+      <div class="section-title-es" id="txt-chart-sub">Bubble size proportional to total emissions · Tamaño proporcional a emisiones totales</div>
+      <div class="chart-container">
+        <canvas id="bubbleChart"></canvas>
+      </div>
+
+      <!-- PARETO TABLE -->
+      <div class="section-title mt-24" id="txt-pareto-title">Pareto Analysis — Priority companies for certification</div>
+      <div class="section-title-es" id="txt-pareto-sub">Análisis Pareto — Empresas prioritarias para certificación energética</div>
+      <div style="overflow-x:auto; margin-top:16px">
+        <table class="pareto-table" id="pareto-table"></table>
+      </div>
+
+      <!-- COMPANY DETAIL TABLE -->
+      <div class="section-title mt-24" id="txt-detail-title">Detailed results by company · Resultados detallados por empresa</div>
+      <div style="overflow-x:auto; margin-top:16px">
+        <table class="pareto-table" id="detail-table"></table>
+      </div>
+    </div>
+
+    <!-- PDF DOWNLOAD -->
+    <div class="pdf-section">
+      <div class="section-title" style="color:white" id="txt-pdf-title">Download Reports · Descargar Informes</div>
+      <div class="section-title-es" style="color:rgba(255,255,255,0.5)" id="txt-pdf-sub">Choose report type and language · Elija tipo de informe e idioma</div>
+      <div class="pdf-grid" id="pdf-grid"></div>
+    </div>
+
+    <!-- LINKS / NEXT STEPS -->
+    <div class="links-section">
+      <div class="section-title" id="txt-links-title">Next steps toward ISO 14064-1 certification</div>
+      <div class="section-title-es" id="txt-links-sub">Próximos pasos hacia la certificación ISO 14064-1 · Regulatory framework and official sources</div>
+      <div class="links-grid">
+        <a href="https://www.unido.org/our-focus/advancing-economic-competitiveness/competitive-trade-capacities-and-corporate-responsibility/environment/eco-industrial-parks" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--blue)">ONUDI · UNIDO</div>
+          <div class="link-card-title">International EIP Framework · Marco Internacional PEI</div>
+          <div class="link-card-url">unido.org</div>
+        </a>
+        <a href="https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--orange)">EU · CBAM 2026</div>
+          <div class="link-card-title">Carbon Border Adjustment Mechanism · Arancel carbono UE</div>
+          <div class="link-card-url">taxation-customs.ec.europa.eu</div>
+        </a>
+        <a href="https://www.upme.gov.co" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--green-dark)">COLOMBIA · UPME</div>
+          <div class="link-card-title">Factores de emisión red eléctrica · Colombia emission factors</div>
+          <div class="link-card-url">upme.gov.co</div>
+        </a>
+        <a href="https://www.minambiente.gov.co/carbono-neutralidad" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--blue)">COLOMBIA · MADS</div>
+          <div class="link-card-title">Colombia Carbono Neutral · Ley 2169 de 2021</div>
+          <div class="link-card-url">minambiente.gov.co</div>
+        </a>
+        <a href="https://www.ipcc.ch/report/ar6" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--blue-dark)">IPCC · AR6</div>
+          <div class="link-card-title">6th Assessment Report · Factores de emisión internacionales</div>
+          <div class="link-card-url">ipcc.ch</div>
+        </a>
+        <a href="https://www.globalreporting.org" target="_blank" class="link-card">
+          <div class="link-card-tag" style="color:var(--green-dark)">GRI STANDARDS</div>
+          <div class="link-card-title">Global Reporting Initiative · Estándares GRI sostenibilidad</div>
+          <div class="link-card-url">globalreporting.org</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SURVEY -->
+    <div class="survey-section visible" id="survey-section">
+      <div class="section-title" id="txt-survey-title">Help us improve EIP·SCOPE</div>
+      <div class="section-title-es" id="txt-survey-sub">Ayúdenos a mejorar · 4 quick questions · 4 preguntas rápidas</div>
+      <div id="survey-questions"></div>
+      <div class="form-group mt-16">
+        <label class="form-label" id="txt-survey-comment">Comments / Comentarios</label>
+        <textarea id="survey-comment" class="form-textarea" rows="3" placeholder="Your feedback helps improve this tool for all parks in LAC · Sus comentarios ayudan a mejorar esta herramienta para todos los parques de LAC"></textarea>
+      </div>
+      <div class="mt-16">
+        <button class="btn-green" onclick="submitSurvey()" id="btn-survey-submit">✓ <span id="txt-survey-submit">Submit feedback</span></button>
+      </div>
+      <div id="survey-thanks" style="display:none; margin-top:16px; padding:14px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3); border-radius:8px; color:var(--green-dark); font-size:14px; font-weight:600;">
+        ✓ <span id="txt-thanks">Thank you! Your feedback has been recorded. · ¡Gracias! Sus comentarios han sido registrados.</span>
+      </div>
+    </div>
+
+    <div class="mt-24 flex gap-12 flex-wrap">
+      <button class="btn-secondary" onclick="goToStep2()" id="btn-back2">← <span id="txt-back2">Edit companies</span></button>
+      <button class="btn-primary" onclick="startOver()" id="btn-restart">🔄 <span id="txt-restart">New calculation</span></button>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>
+    <strong style="color:white">EIP·SCOPE</strong> · Carbon Footprint Tool for Eco-Industrial Parks · Herramienta de Huella de Carbono para Parques Eco-Industriales<br>
+    Developed by <a href="https://www.unido.org" target="_blank">GEIPP-ONUDI</a> · 
+    Methodology: <a href="https://www.iso.org/standard/66453.html" target="_blank">ISO 14064-1</a> · 
+    <a href="https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en" target="_blank">CBAM EU 2026</a> · 
+    <a href="https://www.minambiente.gov.co" target="_blank">Ley 2169/2021 Colombia</a><br>
+    Support: <a href="mailto:j.salazarespitia@unido.org">Juan David Salazar Espitia — Technical Coordinator LAC, GEIPP-ONUDI</a>
+  </div>
+</footer>
+
+<script>
+// ==================== DATA & STATE ====================
+let lang = 'es';
+let selectedCountry = 'co';
+let empresas = [];
+let parkData = {};
+let resultsCalculated = false;
+let bubbleChartInstance = null;
+
+// EMISSION FACTORS
+const EF = {
+  co: {
+    electricity: 0.126, // tCO2/MWh - UPME Colombia
+    gas_natural: 2.06,  // kgCO2/m3
+    diesel: 2.68,       // kgCO2/L
+    gasolina: 2.31,
+    glp: 1.61,
+    carbon: 2.42,       // kgCO2/kg
+    fuel_oil: 3.17,
+    label: 'Colombia (UPME)',
+    source: 'UPME / IDEAM'
+  },
+  int: {
+    electricity: 0.233, // tCO2/MWh - IEA global average IPCC AR6
+    gas_natural: 2.04,
+    diesel: 2.68,
+    gasolina: 2.31,
+    glp: 1.61,
+    carbon: 2.42,
+    fuel_oil: 3.17,
+    label: 'International (IPCC AR6)',
+    source: 'IPCC AR6 / IEA'
+  }
+};
+
+// SECTORS & PRODUCTION UNITS
+const SECTORS = {
+  es: ['Alimentos y bebidas','Textil y confección','Química y petroquímica','Farmacéutica y cosmética','Metalmecánica y manufactura','Construcción y materiales','Logística y transporte','Servicios industriales','Energía y utilities','Tecnología y data centers','Otro'],
+  en: ['Food and beverages','Textile and apparel','Chemical and petrochemical','Pharmaceutical and cosmetic','Metalworking and manufacturing','Construction and materials','Logistics and transport','Industrial services','Energy and utilities','Technology and data centers','Other']
+};
+
+const PROD_UNITS = {
+  0: { es: ['Tonelada de producto','Litros producidos','Unidades envasadas','m³ procesado'], en: ['Ton of product','Liters produced','Packaged units','m³ processed'] },
+  1: { es: ['Metros de tela','Prendas producidas','Kilogramos de fibra'], en: ['Meters of fabric','Garments produced','Kg of fiber'] },
+  2: { es: ['Tonelada de producto','Litros','m³'], en: ['Ton of product','Liters','m³'] },
+  3: { es: ['Unidades producidas','Kg de principio activo'], en: ['Units produced','Kg of active ingredient'] },
+  4: { es: ['Tonelada de metal procesado','Unidades fabricadas','m² de chapa'], en: ['Ton of metal processed','Units manufactured','m² of sheet'] },
+  5: { es: ['Tonelada de material','m³ producido','m² construido'], en: ['Ton of material','m³ produced','m² built'] },
+  6: { es: ['Toneladas transportadas','Ton-km','Despachos'], en: ['Tons transported','Ton-km','Dispatches'] },
+  7: { es: ['Servicios prestados','Horas de servicio'], en: ['Services rendered','Service hours'] },
+  8: { es: ['MWh generados','m³ agua tratada'], en: ['MWh generated','m³ water treated'] },
+  9: { es: ['Servidores activos','TB almacenados'], en: ['Active servers','TB stored'] },
+  10: { es: ['Unidad propia (especificar)'], en: ['Custom unit (specify)'] }
+};
+
+const CERTS = {
+  es: ['Ninguna certificación','ISO 50001','LEED','EDGE','DGNB','Industry Edge','En proceso de certificación','Otra certificación'],
+  en: ['No certification','ISO 50001','LEED','EDGE','DGNB','Industry Edge','Certification in progress','Other certification']
+};
+
+const SECTOR_COLORS = [
+  '#009FE3','#F47920','#8DC63F','#E91E63','#9C27B0',
+  '#FF5722','#607D8B','#4CAF50','#FF9800','#00BCD4','#795548'
+];
+
+// ==================== TRANSLATIONS ====================
+const T = {
+  es: {
+    'txt-help': 'Contactar soporte',
+    'txt-demo-banner': 'MODO DEMOSTRACIÓN — Los datos mostrados son ficticios. Solo para explorar la herramienta.',
+    'txt-hero-title': 'Calculadora de Huella de Carbono<br>para Parques Eco-Industriales',
+    'txt-hero-title-es': 'Carbon Footprint Calculator for Eco-Industrial Parks',
+    'txt-hero-desc': 'Mida las emisiones de GEI (Alcances 1, 2 y 3) de su parque industrial y sus empresas residentes. Genere reportes profesionales alineados con ISO 14064-1, GRI y el Marco Internacional PEI (ONUDI·Banco Mundial·GIZ).',
+    'txt-start': 'Iniciar medición',
+    'txt-demo': 'Ver demo (5 empresas)',
+    'txt-marco': 'Marco Internacional PEI',
+    'txt-instr-title': '¿Cómo funciona?',
+    'txt-instr-title-es': 'How does it work? · Sesión única — tenga sus datos listos antes de comenzar',
+    'txt-step1': 'Datos del parque',
+    'txt-step1-es': 'Park data',
+    'txt-step1-desc': 'Nombre, país, año, número de empresas y metodología (Colombia/Internacional)',
+    'txt-step2': 'Datos por empresa',
+    'txt-step2-es': 'Company data',
+    'txt-step2-desc': 'Sector, empleados, área, consumos de energía, combustibles y certificaciones',
+    'txt-step3': 'Cálculo automático',
+    'txt-step3-es': 'Automatic calculation',
+    'txt-step3-desc': 'tCO₂eq por empresa y total parque, indicador PEI, análisis Pareto y gráfico de burbujas',
+    'txt-step4': 'Descarga informes',
+    'txt-step4-es': 'Download reports',
+    'txt-step4-desc': 'PDF consolidado del parque + individual por empresa, en español o inglés',
+    'txt-notice-title': 'Sesión única:',
+    'txt-notice-body': 'Esta herramienta no guarda datos entre sesiones. Tenga toda la información de las empresas lista antes de comenzar. Descargue sus informes al finalizar.',
+    'txt-ps1': 'Parque',
+    'txt-ps2': 'Empresas',
+    'txt-ps3': 'Resultados',
+    'txt-ps4': 'Informes',
+    'txt-card1-title': 'Datos del Parque Industrial',
+    'txt-card1-sub': 'Industrial Park Data',
+    'txt-card2-title': 'Datos de Empresas Residentes',
+    'txt-card2-sub': 'Resident Company Data',
+    'txt-results-title': 'Resultados · Huella de Carbono',
+    'txt-results-sub': 'Results · Carbon Footprint',
+    'txt-chart-title': 'Emisiones por empresa',
+    'txt-chart-sub': 'Tamaño de burbuja proporcional a emisiones totales · Bubble size proportional to total emissions',
+    'txt-pareto-title': 'Análisis Pareto — Empresas prioritarias para certificación',
+    'txt-pareto-sub': 'Pareto Analysis — Priority companies for energy certification',
+    'txt-detail-title': 'Resultados detallados por empresa',
+    'txt-pdf-title': 'Descargar Informes · Download Reports',
+    'txt-pdf-sub': 'Elija tipo de informe e idioma · Choose report type and language',
+    'txt-links-title': 'Próximos pasos hacia la certificación ISO 14064-1',
+    'txt-links-sub': 'Next steps toward ISO 14064-1 certification · Marco normativo y fuentes oficiales',
+    'txt-survey-title': 'Ayúdenos a mejorar EIP·SCOPE',
+    'txt-survey-sub': 'Help us improve · 4 preguntas rápidas · 4 quick questions',
+    'txt-survey-comment': 'Comentarios / Comments',
+    'txt-survey-submit': 'Enviar retroalimentación',
+    'txt-thanks': '¡Gracias! Sus comentarios han sido registrados. · Thank you! Your feedback has been recorded.',
+    'txt-back1': 'Atrás',
+    'txt-back2': 'Editar empresas',
+    'txt-restart': 'Nueva medición',
+    'txt-calculate': 'Calcular Huella',
+    'txt-park-name': 'Nombre del parque',
+    'txt-year': 'Año de reporte',
+    'txt-total-emp': 'Total empresas en el parque',
+    'txt-reporting-emp': 'Empresas que van a reportar',
+    'txt-reason': 'Motivo por el que las demás empresas no reportan',
+  },
+  en: {
+    'txt-help': 'Contact support',
+    'txt-demo-banner': 'DEMO MODE — Data shown is fictional. For exploration only.',
+    'txt-hero-title': 'Carbon Footprint Calculator<br>for Eco-Industrial Parks',
+    'txt-hero-title-es': 'Calculadora de Huella de Carbono para Parques Eco-Industriales',
+    'txt-hero-desc': 'Measure Scope 1, 2 and 3 GHG emissions of your industrial park and its resident companies. Generate professional reports aligned with ISO 14064-1, GRI Standards, and the International EIP Framework (UNIDO·World Bank·GIZ).',
+    'txt-start': 'Start measurement',
+    'txt-demo': 'View demo (5 companies)',
+    'txt-marco': 'International EIP Framework',
+    'txt-instr-title': 'How does it work?',
+    'txt-instr-title-es': '¿Cómo funciona? · Single session — have your data ready before starting',
+    'txt-step1': 'Park data',
+    'txt-step1-es': 'Datos del parque',
+    'txt-step1-desc': 'Name, country, year, number of companies and methodology (Colombia/International)',
+    'txt-step2': 'Company data',
+    'txt-step2-es': 'Datos por empresa',
+    'txt-step2-desc': 'Sector, employees, area, energy consumption, fuels and energy certifications',
+    'txt-step3': 'Automatic calculation',
+    'txt-step3-es': 'Cálculo automático',
+    'txt-step3-desc': 'tCO₂eq per company and total park, EIP indicator, Pareto analysis and bubble chart',
+    'txt-step4': 'Download reports',
+    'txt-step4-es': 'Descarga informes',
+    'txt-step4-desc': 'Consolidated park PDF + individual per company, in Spanish or English',
+    'txt-notice-title': 'Single session:',
+    'txt-notice-body': 'This tool does not store data between sessions. Have all company information ready before starting. Download your reports at the end.',
+    'txt-ps1': 'Park',
+    'txt-ps2': 'Companies',
+    'txt-ps3': 'Results',
+    'txt-ps4': 'Reports',
+    'txt-card1-title': 'Industrial Park Data',
+    'txt-card1-sub': 'Datos del Parque Industrial',
+    'txt-card2-title': 'Resident Company Data',
+    'txt-card2-sub': 'Datos de Empresas Residentes',
+    'txt-results-title': 'Results · Carbon Footprint',
+    'txt-results-sub': 'Resultados · Huella de Carbono',
+    'txt-chart-title': 'Emissions by company',
+    'txt-chart-sub': 'Bubble size proportional to total emissions · Tamaño proporcional a emisiones totales',
+    'txt-pareto-title': 'Pareto Analysis — Priority companies for certification',
+    'txt-pareto-sub': 'Análisis Pareto — Empresas prioritarias para certificación energética',
+    'txt-detail-title': 'Detailed results by company',
+    'txt-pdf-title': 'Download Reports · Descargar Informes',
+    'txt-pdf-sub': 'Choose report type and language · Elija tipo de informe e idioma',
+    'txt-links-title': 'Next steps toward ISO 14064-1 certification',
+    'txt-links-sub': 'Próximos pasos hacia la certificación ISO 14064-1 · Regulatory framework and official sources',
+    'txt-survey-title': 'Help us improve EIP·SCOPE',
+    'txt-survey-sub': 'Ayúdenos a mejorar · 4 quick questions · 4 preguntas rápidas',
+    'txt-survey-comment': 'Comments / Comentarios',
+    'txt-survey-submit': 'Submit feedback',
+    'txt-thanks': 'Thank you! Your feedback has been recorded. · ¡Gracias! Sus comentarios han sido registrados.',
+    'txt-back1': 'Back',
+    'txt-back2': 'Edit companies',
+    'txt-restart': 'New calculation',
+    'txt-calculate': 'Calculate Footprint',
+    'txt-park-name': 'Park name',
+    'txt-year': 'Reporting year',
+    'txt-total-emp': 'Total companies in park',
+    'txt-reporting-emp': 'Companies that will report',
+    'txt-reason': 'Reason why remaining companies do not report',
+  }
+};
+
+// SURVEY QUESTIONS
+const SURVEY_QS = {
+  es: [
+    'La herramienta es fácil de usar',
+    'Los cálculos son claros y comprensibles',
+    'El informe generado es útil para mi trabajo',
+    'Recomendaría EIP·SCOPE a otros parques industriales'
+  ],
+  en: [
+    'The tool is easy to use',
+    'The calculations are clear and understandable',
+    'The generated report is useful for my work',
+    'I would recommend EIP·SCOPE to other industrial parks'
+  ]
+};
+
+let surveyAnswers = [0,0,0,0];
+
+// ==================== LANGUAGE ====================
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-es').classList.toggle('active', l==='es');
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.documentElement.lang = l;
+  const t = T[l];
+  for (const [id, val] of Object.entries(t)) {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = val;
+  }
+  if (resultsCalculated) renderResults();
+  renderSurvey();
+  if (empresas.length > 0) renderEmpresaList();
+}
+
+// ==================== COUNTRY ====================
+function selectCountry(c) {
+  selectedCountry = c;
+  document.getElementById('opt-co').classList.toggle('active', c==='co');
+  document.getElementById('opt-int').classList.toggle('active', c==='int');
+}
+
+// ==================== TOOL START ====================
+function startTool() {
+  document.getElementById('instructions-section').style.display = 'none';
+  document.getElementById('progress-bar').style.display = 'block';
+  document.getElementById('step1-section').style.display = 'block';
+  document.getElementById('results-section').classList.remove('visible');
+  document.getElementById('step2-section').style.display = 'none';
+  setProgress(1);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function startOver() {
+  empresas = [];
+  resultsCalculated = false;
+  document.getElementById('instructions-section').style.display = 'block';
+  document.getElementById('progress-bar').style.display = 'none';
+  document.getElementById('step1-section').style.display = 'none';
+  document.getElementById('step2-section').style.display = 'none';
+  document.getElementById('results-section').classList.remove('visible');
+  document.getElementById('demo-banner').classList.remove('visible');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function setProgress(step) {
+  for (let i=1; i<=4; i++) {
+    const ps = document.getElementById('ps'+i);
+    ps.classList.remove('active','done');
+    if (i < step) ps.classList.add('done');
+    else if (i === step) ps.classList.add('active');
+    if (i < 4) {
+      const pl = document.getElementById('pl'+i);
+      pl.classList.toggle('done', i < step);
+    }
+  }
+}
+
+// ==================== STEP NAVIGATION ====================
+function goToStep2() {
+  const name = document.getElementById('parkName').value.trim();
+  const year = document.getElementById('reportYear').value;
+  const total = parseInt(document.getElementById('totalEmpresas').value);
+  const reporting = parseInt(document.getElementById('reportingEmpresas').value);
+  if (!name || !year || !total || !reporting) {
+    alert(lang==='es' ? 'Por favor complete todos los campos obligatorios del parque.' : 'Please complete all required park fields.');
+    return;
+  }
+  if (reporting > total) {
+    alert(lang==='es' ? 'Las empresas que reportan no pueden ser más que el total.' : 'Reporting companies cannot exceed total companies.');
+    return;
+  }
+  parkData = { name, year, total, reporting, reason: document.getElementById('reasonNoReport').value, country: selectedCountry };
+  empresas = [];
+  for (let i=0; i<reporting; i++) {
+    empresas.push(getEmptyEmpresa(i));
+  }
+  document.getElementById('step1-section').style.display = 'none';
+  document.getElementById('step2-section').style.display = 'block';
+  renderEmpresaList();
+  setProgress(2);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function goToStep1() {
+  document.getElementById('step2-section').style.display = 'none';
+  document.getElementById('step1-section').style.display = 'block';
+  setProgress(1);
+}
+
+function getEmptyEmpresa(i) {
+  return {
+    id: i, name: '', sector: 0, employees: '', area: '',
+    elec: '', gas: '', diesel: '', gasolina: '', glp: '', carbon: '', fueloil: '',
+    alc3_transport: '', alc3_residuos: '',
+    cert: '0', prodUnit: '', prodVol: '', solarPct: 0,
+    expanded: i === 0
+  };
+}
+
+// ==================== EMPRESA LIST ====================
+function renderEmpresaList() {
+  const container = document.getElementById('empresa-list');
+  container.innerHTML = '';
+  empresas.forEach((e, i) => {
+    const card = document.createElement('div');
+    card.className = 'empresa-card' + (e.expanded ? ' active' : '');
+    card.id = 'empresa-card-' + i;
+
+    const sectorName = SECTORS[lang][e.sector] || SECTORS[lang][0];
+    const certLabel = e.cert !== '0' ? `· ${CERTS[lang][parseInt(e.cert)]}` : '';
+
+    card.innerHTML = `
+      <div class="empresa-card-header" onclick="toggleEmpresa(${i})">
+        <div class="empresa-card-title">
+          <div class="empresa-num">${i+1}</div>
+          <div>
+            <div class="empresa-name-display">${e.name || (lang==='es' ? `Empresa ${i+1}` : `Company ${i+1}`)}</div>
+            <div class="empresa-sector-display">${sectorName} ${certLabel}</div>
+          </div>
+        </div>
+        <div class="empresa-card-toggle">▼</div>
+      </div>
+      <div class="empresa-card-body">
+        ${renderEmpresaForm(i)}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderEmpresaForm(i) {
+  const e = empresas[i];
+  const sectorOpts = SECTORS[lang].map((s, idx) =>
+    `<option value="${idx}" ${e.sector==idx?'selected':''}>${s}</option>`
+  ).join('');
+
+  const certOpts = CERTS[lang].map((c, idx) =>
+    `<option value="${idx}" ${e.cert==idx?'selected':''}>${c}</option>`
+  ).join('');
+
+  const prodUnitOpts = (PROD_UNITS[e.sector]?.[lang] || PROD_UNITS[10][lang]).map(u =>
+    `<option value="${u}" ${e.prodUnit===u?'selected':''}>${u}</option>`
+  ).join('');
+
+  const lbl = lang === 'es';
+
+  return `
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">${lbl?'Nombre de la empresa':'Company name'} <span class="form-label-es">${lbl?'/ Company name':'/ Nombre de la empresa'}</span></label>
+        <input type="text" class="form-input" value="${e.name}" placeholder="${lbl?'Ej. Alimentos XYZ S.A.':'e.g. XYZ Foods Ltd.'}" onchange="updateEmpresa(${i},'name',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Sector industrial':'Industrial sector'} <span class="form-label-es">${lbl?'/ Industrial sector':'/ Sector industrial'}</span></label>
+        <select class="form-select" onchange="updateEmpresaSector(${i},this.value)">${sectorOpts}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Número de empleados':'Number of employees'} <span class="form-label-es">${lbl?'/ Employees':'/ Empleados'}</span></label>
+        <input type="number" class="form-input" value="${e.employees}" placeholder="150" min="0" onchange="updateEmpresa(${i},'employees',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Área de planta (m²)':'Plant area (m²)'} <span class="form-label-es">${lbl?'/ Plant area':'/ Área de planta'}</span></label>
+        <input type="number" class="form-input" value="${e.area}" placeholder="5000" min="0" onchange="updateEmpresa(${i},'area',this.value)">
+      </div>
+    </div>
+
+    <div class="alcance-title">
+      <span class="alcance-badge alcance-1">SCOPE 1</span>
+      ${lbl?'Emisiones directas — Combustibles':'Direct emissions — Fuels'}
+      <span class="form-label-es" style="font-size:11px;color:var(--text-light);font-style:italic">${lbl?'/ Direct emissions':'/ Emisiones directas'}</span>
+    </div>
+    <div class="form-grid-3">
+      <div class="form-group">
+        <label class="form-label">${lbl?'Gas natural (m³/año)':'Natural gas (m³/yr)'}</label>
+        <input type="number" class="form-input" value="${e.gas}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'gas',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Diésel / ACPM (L/año)':'Diesel (L/yr)'}</label>
+        <input type="number" class="form-input" value="${e.diesel}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'diesel',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Gasolina (L/año)':'Gasoline (L/yr)'}</label>
+        <input type="number" class="form-input" value="${e.gasolina}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'gasolina',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'GLP (L/año)':'LPG (L/yr)'}</label>
+        <input type="number" class="form-input" value="${e.glp}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'glp',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Carbón / Coque (kg/año)':'Coal / Coke (kg/yr)'}</label>
+        <input type="number" class="form-input" value="${e.carbon}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'carbon',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Fuel oil (L/año)':'Fuel oil (L/yr)'}</label>
+        <input type="number" class="form-input" value="${e.fueloil}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'fueloil',this.value)">
+      </div>
+    </div>
+
+    <div class="alcance-title">
+      <span class="alcance-badge alcance-2">SCOPE 2</span>
+      ${lbl?'Energía comprada':'Purchased energy'}
+      <span class="form-label-es" style="font-size:11px;color:var(--text-light);font-style:italic">${lbl?'/ Purchased energy':'/ Energía comprada'}</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">${lbl?'Energía eléctrica (kWh/año)':'Electricity (kWh/yr)'}</label>
+        <input type="number" class="form-input" value="${e.elec}" placeholder="500000" min="0" step="1" onchange="updateEmpresa(${i},'elec',this.value)">
+        <span class="form-hint">${lbl?'Factor UPME Colombia: 0.126 tCO₂/MWh':'IPCC international factor: 0.233 tCO₂/MWh'} · Fuente: ${EF[selectedCountry].source}</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Generación solar propia (%) — si aplica':'Own solar generation (%) — if applicable'}</label>
+        <input type="number" class="form-input" value="${e.solarPct}" placeholder="0" min="0" max="100" step="1" onchange="updateEmpresa(${i},'solarPct',this.value)">
+        <span class="form-hint">${lbl?'% del consumo eléctrico cubierto por solar propia':'% of electricity consumption covered by own solar'}</span>
+      </div>
+    </div>
+
+    <div class="alcance-title">
+      <span class="alcance-badge alcance-3">SCOPE 3</span>
+      ${lbl?'Emisiones indirectas (opcional)':'Indirect emissions (optional)'}
+      <span class="form-label-es" style="font-size:11px;color:var(--text-light);font-style:italic">${lbl?'/ Optional':'/ Opcional'}</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">${lbl?'Transporte de carga (ton-km/año)':'Freight transport (ton-km/yr)'}</label>
+        <input type="number" class="form-input" value="${e.alc3_transport}" placeholder="0" min="0" onchange="updateEmpresa(${i},'alc3_transport',this.value)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Residuos sólidos a relleno (ton/año)':'Solid waste to landfill (ton/yr)'}</label>
+        <input type="number" class="form-input" value="${e.alc3_residuos}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'alc3_residuos',this.value)">
+      </div>
+    </div>
+
+    <div class="optional-notice">
+      <div class="optional-badge">⚡ ${lbl?'OPCIONAL':'OPTIONAL'}</div>
+      <div class="optional-text">${lbl?'Indicador de intensidad de emisiones — recomendado para comparación año a año':'Emissions intensity indicator — recommended for year-over-year comparison'}</div>
+      <div class="optional-text-es">${lbl?'Mantener la misma unidad en reportes futuros garantiza comparabilidad metodológica · Keep the same unit in future reports for methodological comparability':'Mantener la misma unidad en reportes futuros garantiza comparabilidad metodológica'}</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">${lbl?'Unidad de producción principal':'Main production unit'} <span class="form-label-es">${lbl?'/ Main unit':'/ Unidad principal'}</span></label>
+        <select class="form-select" id="prodUnit-${i}" onchange="updateProdUnit(${i},this.value)">
+          <option value="">${lbl?'-- Seleccione unidad --':'-- Select unit --'}</option>
+          ${prodUnitOpts}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${lbl?'Volumen de producción anual':'Annual production volume'} <span class="form-label-es">${lbl?'/ Annual volume':'/ Volumen anual'}</span></label>
+        <input type="number" class="form-input" value="${e.prodVol}" placeholder="0" min="0" step="0.01" onchange="updateEmpresa(${i},'prodVol',this.value)" id="prodVol-${i}" ${!e.prodUnit?'disabled':''}>
+      </div>
+    </div>
+
+    <div class="form-grid mt-16">
+      <div class="form-group form-full">
+        <label class="form-label">${lbl?'Certificación de eficiencia energética':'Energy efficiency certification'} <span class="form-label-es">${lbl?'/ Energy cert.':'/ Certificación energética'}</span></label>
+        <select class="form-select" onchange="updateEmpresa(${i},'cert',this.value)">${certOpts}</select>
+        <span class="form-hint">${lbl?'Aplica al indicador PEI: ≥10% de emisiones cubiertas por certificación vigente':'Applies to EIP indicator: ≥10% of emissions covered by active certification'}</span>
+      </div>
+    </div>
+  `;
+}
+
+function toggleEmpresa(i) {
+  empresas[i].expanded = !empresas[i].expanded;
+  const card = document.getElementById('empresa-card-' + i);
+  card.classList.toggle('active', empresas[i].expanded);
+  const body = card.querySelector('.empresa-card-body');
+  body.style.display = empresas[i].expanded ? 'block' : 'none';
+}
+
+function updateEmpresa(i, field, val) {
+  empresas[i][field] = val;
+  const card = document.getElementById('empresa-card-' + i);
+  const nameEl = card.querySelector('.empresa-name-display');
+  if (field === 'name') nameEl.textContent = val || (lang==='es' ? `Empresa ${i+1}` : `Company ${i+1}`);
+}
+
+function updateEmpresaSector(i, val) {
+  empresas[i].sector = parseInt(val);
+  empresas[i].prodUnit = '';
+  empresas[i].prodVol = '';
+  const card = document.getElementById('empresa-card-' + i);
+  const sectorEl = card.querySelector('.empresa-sector-display');
+  sectorEl.textContent = SECTORS[lang][parseInt(val)];
+  // Re-render only the prod unit select
+  const sel = document.getElementById('prodUnit-' + i);
+  if (sel) {
+    const units = PROD_UNITS[parseInt(val)]?.[lang] || PROD_UNITS[10][lang];
+    sel.innerHTML = `<option value="">${lang==='es'?'-- Seleccione unidad --':'-- Select unit --'}</option>` +
+      units.map(u => `<option value="${u}">${u}</option>`).join('');
+  }
+  const volInput = document.getElementById('prodVol-' + i);
+  if (volInput) volInput.disabled = true;
+}
+
+function updateProdUnit(i, val) {
+  empresas[i].prodUnit = val;
+  const volInput = document.getElementById('prodVol-' + i);
+  if (volInput) volInput.disabled = !val;
+}
+
+function updateRepresentativity() {
+  const total = parseInt(document.getElementById('totalEmpresas').value);
+  const rep = parseInt(document.getElementById('reportingEmpresas').value);
+  const box = document.getElementById('representativity-box');
+  if (total && rep && rep <= total) {
+    const pct = Math.round(rep/total*100);
+    const es = `📊 Representatividad: <strong>${rep} de ${total} empresas (${pct}%)</strong> van a reportar su huella de carbono.`;
+    const en = `📊 Representativity: <strong>${rep} of ${total} companies (${pct}%)</strong> will report their carbon footprint.`;
+    document.getElementById('txt-rep').innerHTML = lang==='es' ? es : en;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+// ==================== CALCULATIONS ====================
+function calcEmpresa(e) {
+  const ef = EF[selectedCountry];
+  const solarFactor = 1 - Math.min(parseFloat(e.solarPct)||0, 100)/100;
+
+  // Scope 1 — tCO2eq
+  const alc1 =
+    (parseFloat(e.gas)||0) * ef.gas_natural / 1000 +
+    (parseFloat(e.diesel)||0) * ef.diesel / 1000 +
+    (parseFloat(e.gasolina)||0) * ef.gasolina / 1000 +
+    (parseFloat(e.glp)||0) * ef.glp / 1000 +
+    (parseFloat(e.carbon)||0) * ef.carbon / 1000 +
+    (parseFloat(e.fueloil)||0) * ef.fuel_oil / 1000;
+
+  // Scope 2 — tCO2eq (kWh → MWh conversion)
+  const alc2 = (parseFloat(e.elec)||0) / 1000 * ef.electricity * solarFactor;
+
+  // Scope 3 — tCO2eq (simplified)
+  const alc3 =
+    (parseFloat(e.alc3_transport)||0) * 0.00008 + // 80gCO2/ton-km truck
+    (parseFloat(e.alc3_residuos)||0) * 0.5;       // 0.5 tCO2/ton landfill
+
+  const total = alc1 + alc2 + alc3;
+
+  // Intensity
+  const employees = parseInt(e.employees)||0;
+  const area = parseFloat(e.area)||0;
+  const prodVol = parseFloat(e.prodVol)||0;
+
+  const intPerEmp = employees > 0 ? total/employees : null;
+  const intPerArea = area > 0 ? total/area*1000 : null; // tCO2/1000m2
+  const intPerProd = (prodVol > 0 && e.prodUnit) ? (alc1+alc2)/prodVol : null;
+
+  // Cert status
+  const certIdx = parseInt(e.cert)||0;
+  const hasCert = certIdx > 0 && certIdx < 6; // 1-5 = active cert, 6 = in progress, 7 = other
+  const inProgress = certIdx === 6;
+
+  return { alc1, alc2, alc3, total, intPerEmp, intPerArea, intPerProd, hasCert, inProgress, employees, area, prodVol };
+}
+
+function calculateAll() {
+  // Validate at least one company has data
+  let hasData = empresas.some(e => e.name || e.elec || e.gas || e.diesel);
+  if (!hasData) {
+    alert(lang==='es' ? 'Por favor ingrese datos para al menos una empresa.' : 'Please enter data for at least one company.');
+    return;
+  }
+
+  document.getElementById('step2-section').style.display = 'none';
+  document.getElementById('results-section').classList.add('visible');
+  resultsCalculated = true;
+  setProgress(3);
+  renderResults();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ==================== RESULTS ====================
+function renderResults() {
+  const results = empresas.map(e => ({ ...e, calc: calcEmpresa(e) }));
+  const totalAlc1 = results.reduce((s,e) => s+e.calc.alc1, 0);
+  const totalAlc2 = results.reduce((s,e) => s+e.calc.alc2, 0);
+  const totalAlc3 = results.reduce((s,e) => s+e.calc.alc3, 0);
+  const totalAll = totalAlc1 + totalAlc2 + totalAlc3;
+
+  // METRICS
+  const mg = document.getElementById('metrics-grid');
+  mg.innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">TOTAL PARK · PARQUE</div>
+      <div class="metric-value">${fmt(totalAll)}</div>
+      <div class="metric-unit">tCO₂eq / ${lang==='es'?'año':'year'}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">SCOPE 1 · ALCANCE 1</div>
+      <div class="metric-value" style="color:#DC2626">${fmt(totalAlc1)}</div>
+      <div class="metric-unit">tCO₂eq · ${Math.round(totalAll>0?totalAlc1/totalAll*100:0)}%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">SCOPE 2 · ALCANCE 2</div>
+      <div class="metric-value" style="color:var(--blue-dark)">${fmt(totalAlc2)}</div>
+      <div class="metric-unit">tCO₂eq · ${Math.round(totalAll>0?totalAlc2/totalAll*100:0)}%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">SCOPE 3 · ALCANCE 3</div>
+      <div class="metric-value" style="color:var(--green-dark)">${fmt(totalAlc3)}</div>
+      <div class="metric-unit">tCO₂eq · ${Math.round(totalAll>0?totalAlc3/totalAll*100:0)}%</div>
+    </div>
+  `;
+
+  // PEI INDICATOR
+  const certEmissions = results.filter(e => e.calc.hasCert).reduce((s,e) => s+e.calc.alc1+e.calc.alc2, 0);
+  const base12 = totalAlc1 + totalAlc2;
+  const peiPct = base12 > 0 ? Math.round(certEmissions/base12*100) : 0;
+  const cumple = peiPct >= 10;
+  const gap = base12 > 0 ? Math.max(0, base12*0.1 - certEmissions) : 0;
+
+  const peiBox = document.getElementById('indicator-pei-box');
+  peiBox.innerHTML = `
+    <div class="indicator-pei ${cumple?'cumple':'no-cumple'}">
+      <div class="indicator-icon">${cumple?'✅':'⚠️'}</div>
+      <div class="indicator-body">
+        <div class="indicator-title">
+          ${lang==='es'?'Indicador PEI — Certificación de Eficiencia Energética':'EIP Indicator — Energy Efficiency Certification'}
+        </div>
+        <div class="indicator-desc">
+          ${cumple
+            ? (lang==='es'
+              ? `✓ El parque CUMPLE el indicador del Marco Internacional PEI (ONUDI·Banco Mundial·GIZ). Al menos el 10% de las emisiones Alcance 1+2 están cubiertas por empresas con certificación energética vigente.`
+              : `✓ The park MEETS the International EIP Framework indicator (UNIDO·World Bank·GIZ). At least 10% of Scope 1+2 emissions are covered by companies with active energy certification.`)
+            : (lang==='es'
+              ? `✗ El parque NO CUMPLE aún el indicador. Faltan ${fmt(gap)} tCO₂eq adicionales bajo certificación energética vigente para alcanzar el 10%. Ver análisis Pareto abajo.`
+              : `✗ The park DOES NOT YET MEET the indicator. An additional ${fmt(gap)} tCO₂eq under active energy certification are needed to reach 10%. See Pareto analysis below.`)
+          }
+          <br><em style="font-size:12px;color:${cumple?'var(--green-dark)':'var(--danger)'}">
+            ${lang==='es'?'Fuente: Marco Internacional PEI v2.0, Tabla 3, Indicador ambiental':'Source: International EIP Framework v2.0, Table 3, Environmental indicator'}
+          </em>
+        </div>
+      </div>
+      <div class="indicator-pct">${peiPct}%</div>
+    </div>
+  `;
+
+  // BUBBLE CHART
+  renderBubbleChart(results, totalAll);
+
+  // PARETO TABLE
+  renderParetoTable(results, base12, certEmissions);
+
+  // DETAIL TABLE
+  renderDetailTable(results, totalAll);
+
+  // PDF SECTION
+  renderPDFSection(results, totalAll, totalAlc1, totalAlc2, totalAlc3, peiPct, cumple, gap);
+
+  // SURVEY
+  renderSurvey();
+}
+
+function renderBubbleChart(results, totalAll) {
+  const ctx = document.getElementById('bubbleChart').getContext('2d');
+  if (bubbleChartInstance) bubbleChartInstance.destroy();
+
+  const datasets = results.map((e, i) => {
+    const sectorLabel = SECTORS[lang][e.sector];
+    const r = totalAll > 0 ? Math.max(8, Math.sqrt(e.calc.total/totalAll)*80) : 8;
+    return {
+      label: e.name || `${lang==='es'?'Empresa':'Company'} ${i+1} · ${sectorLabel}`,
+      data: [{
+        x: e.calc.alc1,
+        y: e.calc.alc2,
+        r: r
+      }],
+      backgroundColor: SECTOR_COLORS[e.sector % SECTOR_COLORS.length] + '88',
+      borderColor: SECTOR_COLORS[e.sector % SECTOR_COLORS.length],
+      borderWidth: 2
+    };
+  });
+
+  bubbleChartInstance = new Chart(ctx, {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = ctx.raw;
+              return `${ctx.dataset.label}: S1=${fmt(d.x)}, S2=${fmt(d.y)} tCO₂eq`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: `Scope 1 / Alcance 1 (tCO₂eq)`, font: { size: 11 } } },
+        y: { title: { display: true, text: `Scope 2 / Alcance 2 (tCO₂eq)`, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderParetoTable(results, base12, certEmissions) {
+  const noCert = results
+    .filter(e => !e.calc.hasCert)
+    .sort((a,b) => (b.calc.alc1+b.calc.alc2)-(a.calc.alc1+a.calc.alc2));
+
+  let accumulated = certEmissions;
+  const th = lang==='es';
+
+  const table = document.getElementById('pareto-table');
+  table.innerHTML = `
+    <tr>
+      <th>#</th>
+      <th>${th?'Empresa':'Company'}</th>
+      <th>${th?'Sector':'Sector'}</th>
+      <th>${th?'Emisiones Alc.1+2':'Scope 1+2 Emissions'}<br>(tCO₂eq)</th>
+      <th>${th?'Acumulado':'Cumulative'} (%)</th>
+      <th>${th?'Prioridad':'Priority'}</th>
+    </tr>
+    ${noCert.map((e,i) => {
+      accumulated += e.calc.alc1 + e.calc.alc2;
+      const pct = base12 > 0 ? Math.round(accumulated/base12*100) : 0;
+      const meetsGoal = pct >= 10;
+      const wasMeeting = i > 0 && base12 > 0 && Math.round((accumulated-(e.calc.alc1+e.calc.alc2))/base12*100) >= 10;
+      const dotClass = i===0 && meetsGoal ? 'dot-green' : (meetsGoal && !wasMeeting ? 'dot-amber' : 'dot-gray');
+      const priority = i===0 && meetsGoal ? (th?'🟢 Certif. esta sola → cumple indicador':'🟢 Certify alone → meets indicator') :
+                       meetsGoal && !wasMeeting ? (th?'🟡 Contribuye significativamente':'🟡 Significant contribution') :
+                       (th?'⚪ Aporte marginal':'⚪ Marginal contribution');
+      return `
+        <tr>
+          <td><strong>${i+1}</strong></td>
+          <td>${e.name || (th?`Empresa ${e.id+1}`:`Company ${e.id+1}`)}</td>
+          <td>${SECTORS[lang][e.sector]}</td>
+          <td><strong>${fmt(e.calc.alc1+e.calc.alc2)}</strong></td>
+          <td>${pct}%</td>
+          <td>${priority}</td>
+        </tr>
+      `;
+    }).join('')}
+    ${noCert.length === 0 ? `<tr><td colspan="6" style="text-align:center;color:var(--green-dark);padding:20px">✅ ${th?'Todas las empresas reportantes tienen certificación energética vigente':'All reporting companies have active energy certification'}</td></tr>` : ''}
+  `;
+}
+
+function renderDetailTable(results, totalAll) {
+  const th = lang==='es';
+  const table = document.getElementById('detail-table');
+  table.innerHTML = `
+    <tr>
+      <th>${th?'Empresa':'Company'}</th>
+      <th>${th?'Sector':'Sector'}</th>
+      <th>Scope 1<br>(tCO₂eq)</th>
+      <th>Scope 2<br>(tCO₂eq)</th>
+      <th>Scope 3<br>(tCO₂eq)</th>
+      <th>${th?'Total':'Total'}<br>(tCO₂eq)</th>
+      <th>% ${th?'del parque':'of park'}</th>
+      <th>${th?'Certificación':'Certification'}</th>
+      <th>${th?'Intensidad/empleado':'Intensity/employee'}</th>
+    </tr>
+    ${results.map((e,i) => {
+      const pct = totalAll > 0 ? Math.round(e.calc.total/totalAll*100) : 0;
+      const certName = CERTS[lang][parseInt(e.cert)||0];
+      const certStyle = e.calc.hasCert ? 'color:var(--green-dark);font-weight:600' : (e.calc.inProgress ? 'color:var(--warning)' : 'color:var(--gray)');
+      return `
+        <tr>
+          <td><strong>${e.name || (th?`Empresa ${i+1}`:`Company ${i+1}`)}</strong></td>
+          <td style="font-size:12px">${SECTORS[lang][e.sector]}</td>
+          <td style="color:#DC2626">${fmt(e.calc.alc1)}</td>
+          <td style="color:var(--blue-dark)">${fmt(e.calc.alc2)}</td>
+          <td style="color:var(--green-dark)">${fmt(e.calc.alc3)}</td>
+          <td><strong>${fmt(e.calc.total)}</strong></td>
+          <td><strong>${pct}%</strong></td>
+          <td style="${certStyle};font-size:12px">${certName}</td>
+          <td style="font-size:12px">${e.calc.intPerEmp ? fmt(e.calc.intPerEmp)+' tCO₂/emp' : '—'}</td>
+        </tr>
+      `;
+    }).join('')}
+  `;
+}
+
+function renderPDFSection(results, totalAll, alc1, alc2, alc3, peiPct, cumple, gap) {
+  const pg = document.getElementById('pdf-grid');
+  pg.innerHTML = `
+    <div class="pdf-card">
+      <div class="pdf-card-title">📊 ${lang==='es'?'Informe consolidado del parque':'Consolidated park report'}</div>
+      <div class="pdf-card-desc">${lang==='es'?'Resumen ejecutivo, tabla de todas las empresas, análisis Pareto, indicador PEI y próximos pasos.':'Executive summary, all companies table, Pareto analysis, EIP indicator and next steps.'}</div>
+      <div class="pdf-lang-btns">
+        <button class="btn-pdf btn-pdf-es" onclick="generatePDF('park','es')">🇨🇴 Español</button>
+        <button class="btn-pdf" onclick="generatePDF('park','en')">🇺🇸 English</button>
+      </div>
+    </div>
+    <div class="pdf-card">
+      <div class="pdf-card-title">🏢 ${lang==='es'?'Informes individuales por empresa':'Individual company reports'}</div>
+      <div class="pdf-card-desc">${lang==='es'?'Un PDF por empresa con sus emisiones, % del parque, gráfico de participación y próximos pasos.':'One PDF per company with emissions, % of park, participation chart and next steps.'}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        ${results.map((e,i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span style="font-size:12px;color:rgba(255,255,255,0.7)">${e.name || (lang==='es'?`Empresa ${i+1}`:`Company ${i+1}`)}</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn-pdf btn-pdf-es" onclick="generatePDF('company','es',${i})" style="padding:5px 10px;font-size:11px">ES</button>
+              <button class="btn-pdf" onclick="generatePDF('company','en',${i})" style="padding:5px 10px;font-size:11px">EN</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ==================== PDF GENERATION ====================
+function generatePDF(type, pdfLang, companyIdx) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const results = empresas.map(e => ({ ...e, calc: calcEmpresa(e) }));
+  const totalAlc1 = results.reduce((s,e) => s+e.calc.alc1, 0);
+  const totalAlc2 = results.reduce((s,e) => s+e.calc.alc2, 0);
+  const totalAlc3 = results.reduce((s,e) => s+e.calc.alc3, 0);
+  const totalAll = totalAlc1 + totalAlc2 + totalAlc3;
+  const base12 = totalAlc1 + totalAlc2;
+  const certEmissions = results.filter(e => e.calc.hasCert).reduce((s,e) => s+e.calc.alc1+e.calc.alc2, 0);
+  const peiPct = base12 > 0 ? Math.round(certEmissions/base12*100) : 0;
+  const cumple = peiPct >= 10;
+  const es = pdfLang === 'es';
+
+  const W = 210; const M = 20;
+  let y = 0;
+
+  // HEADER BAR
+  doc.setFillColor(2, 62, 138);
+  doc.rect(0, 0, W, 40, 'F');
+  doc.setFillColor(0, 159, 227);
+  doc.rect(0, 40, W, 4, 'F');
+
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica','bold');
+  doc.text('EIP·SCOPE', M, 18);
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text(es ? 'Herramienta de Huella de Carbono para Parques Eco-Industriales' : 'Carbon Footprint Tool for Eco-Industrial Parks', M, 26);
+  doc.setFontSize(8);
+  doc.setTextColor(180,210,240);
+  doc.text('GEIPP · ONUDI / UNIDO · ISO 14064-1 · GRI Standards', M, 34);
+
+  // DATE & QR placeholder
+  doc.setTextColor(180,210,240);
+  doc.setFontSize(8);
+  doc.text(`${es?'Generado':'Generated'}: ${new Date().toLocaleDateString(es?'es-CO':'en-US')} | ${EF[selectedCountry].label}`, W-M, 34, {align:'right'});
+
+  y = 52;
+
+  if (type === 'park') {
+    // PARK REPORT
+    doc.setTextColor(2,62,138);
+    doc.setFontSize(16);
+    doc.setFont('helvetica','bold');
+    doc.text(es ? 'Informe de Huella de Carbono' : 'Carbon Footprint Report', M, y);
+    doc.text(parkData.name || 'Industrial Park', M, y+9);
+    y += 22;
+
+    doc.setFillColor(245,247,250);
+    doc.rect(M, y, W-2*M, 28, 'F');
+    doc.setTextColor(71,85,105);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    const yr = parkData.year || '2024';
+    const rep = parkData.reporting || empresas.length;
+    const tot = parkData.total || rep;
+    const pct = Math.round(rep/tot*100);
+    doc.text(`${es?'Año de reporte':'Reporting year'}: ${yr}    |    ${es?'País':'Country'}: ${selectedCountry==='co'?'Colombia':'International'}    |    ${es?'Metodología':'Methodology'}: ${EF[selectedCountry].label}`, M+4, y+8);
+    doc.text(`${es?'Empresas reportantes':'Reporting companies'}: ${rep} ${es?'de':'of'} ${tot} (${pct}%)    |    ${es?'Factores':'Factors'}: ${EF[selectedCountry].source}`, M+4, y+16);
+    if (parkData.reason) {
+      const reasonText = `${es?'Motivo empresas sin reporte':'Reason for non-reporting'}: ${parkData.reason}`;
+      const lines = doc.splitTextToSize(reasonText, W-2*M-8);
+      doc.text(lines[0], M+4, y+23);
+    }
+    y += 34;
+
+    // EMISSIONS SUMMARY
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(2,62,138);
+    doc.text(es ? 'Resumen de Emisiones' : 'Emissions Summary', M, y);
+    y += 8;
+
+    const boxes = [
+      { label: 'TOTAL', val: fmt(totalAll)+' tCO₂eq', color: [2,62,138] },
+      { label: 'SCOPE 1', val: fmt(totalAlc1)+' tCO₂eq', color: [220,38,38] },
+      { label: 'SCOPE 2', val: fmt(totalAlc2)+' tCO₂eq', color: [0,119,182] },
+      { label: 'SCOPE 3', val: fmt(totalAlc3)+' tCO₂eq', color: [90,140,26] }
+    ];
+
+    boxes.forEach((b, i) => {
+      const bx = M + i*(W-2*M)/4;
+      const bw = (W-2*M)/4 - 3;
+      doc.setFillColor(...b.color);
+      doc.rect(bx, y, bw, 16, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica','bold');
+      doc.text(b.label, bx+bw/2, y+5, {align:'center'});
+      doc.setFontSize(9);
+      doc.text(b.val, bx+bw/2, y+12, {align:'center'});
+    });
+    y += 22;
+
+    // PEI INDICATOR
+    doc.setFillColor(cumple ? 240:255, cumple?255:240, cumple?240:240);
+    doc.rect(M, y, W-2*M, 22, 'F');
+    doc.setTextColor(cumple ? 20:180, cumple?150:20, cumple?20:20);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','bold');
+    doc.text(`${es?'Indicador PEI — Certificación Energética':'EIP Indicator — Energy Certification'}: ${peiPct}% ${cumple?(es?'✓ CUMPLE':'✓ MEETS'):(es?'✗ NO CUMPLE':'✗ DOES NOT MEET')}`, M+4, y+8);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    const indText = cumple
+      ? (es ? `El parque cumple el umbral mínimo de 10% establecido en el Marco Internacional PEI (ONUDI·Banco Mundial·GIZ).` : `The park meets the 10% minimum threshold of the International EIP Framework (UNIDO·World Bank·GIZ).`)
+      : (es ? `Faltan ${fmt(base12*0.1-certEmissions)} tCO₂eq adicionales bajo certificación energética para alcanzar el 10%.` : `An additional ${fmt(base12*0.1-certEmissions)} tCO₂eq under energy certification are needed to reach 10%.`);
+    doc.text(indText, M+4, y+16);
+    y += 28;
+
+    // COMPANY TABLE
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(2,62,138);
+    doc.text(es ? 'Resultados por Empresa' : 'Results by Company', M, y);
+    y += 7;
+
+    // Table header
+    doc.setFillColor(2,62,138);
+    doc.rect(M, y, W-2*M, 7, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica','bold');
+    const cols = [M+2, M+40, M+62, M+82, M+102, M+122, M+142, M+158];
+    const headers = [es?'Empresa':'Company', es?'Sector':'Sector', 'S1', 'S2', 'S3', 'Total', '%', es?'Cert.':'Cert.'];
+    headers.forEach((h,i) => doc.text(h, cols[i], y+5));
+    y += 8;
+
+    results.forEach((e, idx) => {
+      if (y > 260) { doc.addPage(); y = 20; }
+      const bg = idx % 2 === 0 ? [245,247,250] : [255,255,255];
+      doc.setFillColor(...bg);
+      doc.rect(M, y, W-2*M, 6, 'F');
+      doc.setTextColor(30,41,59);
+      doc.setFontSize(7);
+      doc.setFont('helvetica','normal');
+      const pct2 = totalAll > 0 ? Math.round(e.calc.total/totalAll*100) : 0;
+      const name = (e.name || (es?`Empresa ${idx+1}`:`Company ${idx+1}`)).substring(0,20);
+      const sector = SECTORS[es?'es':'en'][e.sector].substring(0,16);
+      const certShort = e.calc.hasCert ? '✓' : (e.calc.inProgress ? '~' : '—');
+      const row = [name, sector, fmt(e.calc.alc1), fmt(e.calc.alc2), fmt(e.calc.alc3), fmt(e.calc.total), pct2+'%', certShort];
+      row.forEach((v,i) => doc.text(String(v), cols[i], y+4));
+      y += 6;
+    });
+
+    y += 10;
+
+    // NEXT STEPS
+    if (y > 230) { doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(2,62,138);
+    doc.text(es ? 'Próximos Pasos y Marco Normativo' : 'Next Steps and Regulatory Framework', M, y);
+    y += 7;
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(71,85,105);
+
+    const nextSteps = es ? [
+      '1. ISO 14064-1: Formalice su inventario y prepárese para verificación bajo ISO 14064-3.',
+      '2. CBAM UE 2026: Desde enero 2026, exportadores a la UE deben declarar emisiones incorporadas.',
+      '3. Ley 2169 de 2021: Colombia se compromete a reducir 51% de emisiones a 2030 y carbono neutro a 2050.',
+      '4. Colombia Carbono Neutral (MADS): minambiente.gov.co/carbono-neutralidad',
+      '5. Marco Internacional PEI: unido.org | Factores UPME: upme.gov.co | IPCC AR6: ipcc.ch/report/ar6',
+      '6. Beneficios: Acceso a financiamiento verde, mercados europeos y cadenas de suministro sostenibles.'
+    ] : [
+      '1. ISO 14064-1: Formalize your inventory and prepare for verification under ISO 14064-3.',
+      '2. EU CBAM 2026: From January 2026, EU exporters must declare embedded emissions.',
+      '3. Law 2169/2021 (Colombia): Commits to 51% emission reduction by 2030 and carbon neutrality by 2050.',
+      '4. International EIP Framework: unido.org | IPCC AR6 factors: ipcc.ch/report/ar6',
+      '5. GRI Standards: globalreporting.org | CBAM: taxation-customs.ec.europa.eu',
+      '6. Benefits: Access to green finance, European markets and sustainable supply chains.'
+    ];
+
+    nextSteps.forEach(step => {
+      const lines = doc.splitTextToSize(step, W-2*M);
+      doc.text(lines, M, y);
+      y += lines.length * 5 + 2;
+    });
+
+    // DISCLAIMER
+    if (y > 240) { doc.addPage(); y = 20; }
+    y += 5;
+    doc.setFillColor(255,243,205);
+    doc.rect(M, y, W-2*M, 18, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(120,90,10);
+    doc.setFont('helvetica','bold');
+    doc.text(es ? 'AVISO METODOLÓGICO:' : 'METHODOLOGICAL DISCLAIMER:', M+3, y+6);
+    doc.setFont('helvetica','normal');
+    const disc = es
+      ? 'Este inventario fue elaborado por la administración del parque con la herramienta EIP·SCOPE (GEIPP-ONUDI). Los datos no han sido verificados por terceros. Para verificación bajo ISO 14064-3, contacte un organismo acreditado.'
+      : 'This inventory was prepared by park management using EIP·SCOPE (GEIPP-UNIDO). Data has not been third-party verified. For ISO 14064-3 verification, contact an accredited body.';
+    const discLines = doc.splitTextToSize(disc, W-2*M-6);
+    doc.text(discLines, M+3, y+12);
+    y += 22;
+
+    // FOOTER
+    doc.setFillColor(2,62,138);
+    doc.rect(0, 285, W, 12, 'F');
+    doc.setTextColor(180,210,240);
+    doc.setFontSize(7);
+    doc.text('EIP·SCOPE · GEIPP-ONUDI/UNIDO · j.salazarespitia@unido.org · Juan David Salazar Espitia — Technical Coordinator LAC', W/2, 291, {align:'center'});
+    doc.text(`${es?'Página':'Page'} 1 | eip-scope.github.io`, W/2, 296, {align:'center'});
+
+    doc.save(`EIP-SCOPE_${parkData.name||'Park'}_${parkData.year||'2024'}_${pdfLang.toUpperCase()}.pdf`);
+
+  } else {
+    // COMPANY REPORT
+    const e = results[companyIdx];
+    const totalAll2 = results.reduce((s,r) => s+r.calc.total, 0);
+    const pctPark = totalAll2 > 0 ? Math.round(e.calc.total/totalAll2*100) : 0;
+    const pctAlc1 = (totalAlc1 > 0) ? Math.round(e.calc.alc1/totalAlc1*100) : 0;
+    const pctAlc2 = (totalAlc2 > 0) ? Math.round(e.calc.alc2/totalAlc2*100) : 0;
+    const compName = e.name || (es?`Empresa ${companyIdx+1}`:`Company ${companyIdx+1}`);
+
+    doc.setTextColor(2,62,138);
+    doc.setFontSize(16);
+    doc.setFont('helvetica','bold');
+    doc.text(es?'Informe Individual de Huella de Carbono':'Individual Carbon Footprint Report', M, 52);
+    doc.setFontSize(13);
+    doc.text(compName, M, 62);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(71,85,105);
+    doc.text(`${parkData.name||'Industrial Park'} · ${parkData.year||'2024'} · ${SECTORS[es?'es':'en'][e.sector]}`, M, 70);
+    y = 80;
+
+    // Emissions boxes
+    const boxes2 = [
+      { label: 'TOTAL', val: fmt(e.calc.total)+' tCO₂eq', color: [2,62,138] },
+      { label: 'SCOPE 1', val: fmt(e.calc.alc1)+' tCO₂eq', color: [220,38,38] },
+      { label: 'SCOPE 2', val: fmt(e.calc.alc2)+' tCO₂eq', color: [0,119,182] },
+      { label: 'SCOPE 3', val: fmt(e.calc.alc3)+' tCO₂eq', color: [90,140,26] }
+    ];
+    boxes2.forEach((b,i) => {
+      const bx = M + i*(W-2*M)/4;
+      const bw = (W-2*M)/4-3;
+      doc.setFillColor(...b.color);
+      doc.rect(bx, y, bw, 16, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(7);
+      doc.setFont('helvetica','bold');
+      doc.text(b.label, bx+bw/2, y+5, {align:'center'});
+      doc.setFontSize(9);
+      doc.text(b.val, bx+bw/2, y+12, {align:'center'});
+    });
+    y += 22;
+
+    // Park contribution
+    doc.setFillColor(230,247,255);
+    doc.rect(M, y, W-2*M, 32, 'F');
+    doc.setTextColor(2,62,138);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.text(es?'Su empresa en el contexto del parque':'Your company in park context', M+4, y+8);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(71,85,105);
+    doc.text(`• ${es?'Emisiones totales':'Total emissions'}: ${pctPark}% ${es?'del total del parque':'of park total'}`, M+4, y+16);
+    doc.text(`• Scope 1: ${pctAlc1}% ${es?'del Alcance 1 del parque':'of park Scope 1'}  |  Scope 2: ${pctAlc2}% ${es?'del Alcance 2 del parque':'of park Scope 2'}`, M+4, y+23);
+    if (e.calc.intPerEmp) doc.text(`• ${es?'Intensidad':'Intensity'}: ${fmt(e.calc.intPerEmp)} tCO₂eq/${es?'empleado':'employee'}  ${e.calc.intPerArea?`| ${fmt(e.calc.intPerArea)} tCO₂eq/1000m²`:''}`, M+4, y+30);
+    y += 38;
+
+    // Certification
+    const certName = CERTS[es?'es':'en'][parseInt(e.cert)||0];
+    doc.setFillColor(e.calc.hasCert ? 240 : 255, e.calc.hasCert?255:245, e.calc.hasCert?240:240);
+    doc.rect(M, y, W-2*M, 18, 'F');
+    doc.setTextColor(e.calc.hasCert ? 20 : 100);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.text(`${es?'Certificación de eficiencia energética':'Energy efficiency certification'}: ${certName}`, M+4, y+8);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    const certMsg = e.calc.hasCert
+      ? (es?'✓ Esta empresa contribuye al indicador del 10% del Marco Internacional PEI.':'✓ This company contributes to the 10% indicator of the International EIP Framework.')
+      : (es?'Esta empresa no cuenta con certificación vigente. Considere ISO 50001, LEED, EDGE u otras.':'This company has no active certification. Consider ISO 50001, LEED, EDGE or others.');
+    doc.text(certMsg, M+4, y+15);
+    y += 24;
+
+    // Production unit
+    if (e.prodUnit && e.calc.intPerProd) {
+      doc.setFillColor(245,247,250);
+      doc.rect(M, y, W-2*M, 16, 'F');
+      doc.setTextColor(71,85,105);
+      doc.setFontSize(8);
+      doc.setFont('helvetica','bold');
+      doc.text(`${es?'Indicador de intensidad':'Intensity indicator'}: ${fmt(e.calc.intPerProd)} tCO₂eq / ${e.prodUnit}`, M+4, y+6);
+      doc.setFont('helvetica','normal');
+      doc.text(es?'⚠ Mantener esta misma unidad en reportes futuros para garantizar comparabilidad metodológica.':'⚠ Keep this same unit in future reports to ensure methodological comparability.', M+4, y+13);
+      y += 20;
+    }
+
+    // Next steps
+    y += 6;
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(2,62,138);
+    doc.text(es?'Próximos pasos recomendados':'Recommended next steps', M, y);
+    y += 7;
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(71,85,105);
+    const steps = es ? [
+      '1. Formalice este inventario bajo ISO 14064-1 y prepárese para verificación por terceros (ISO 14064-3).',
+      '2. Si exporta a Europa: el CBAM (desde enero 2026) exige declarar emisiones incorporadas en sus productos.',
+      '3. Colombia Carbono Neutral: vincúlese al programa del Ministerio de Ambiente (minambiente.gov.co).',
+      '4. Considere certificación ISO 50001 (eficiencia energética) para contribuir al indicador PEI del parque.',
+      '5. Acceda a financiamiento verde: las empresas con inventarios verificados tienen mayor acceso a bonos verdes.'
+    ] : [
+      '1. Formalize this inventory under ISO 14064-1 and prepare for third-party verification (ISO 14064-3).',
+      '2. If you export to Europe: CBAM (from January 2026) requires declaring embedded emissions in your products.',
+      '3. Consider ISO 50001 (energy management) certification to contribute to the park EIP indicator.',
+      '4. Access green finance: companies with verified inventories have greater access to green bonds and ESG investors.',
+      '5. Sources: ipcc.ch/report/ar6 | taxation-customs.ec.europa.eu | globalreporting.org'
+    ];
+    steps.forEach(s => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      const lines = doc.splitTextToSize(s, W-2*M);
+      doc.text(lines, M, y);
+      y += lines.length*5+2;
+    });
+
+    // Disclaimer
+    if (y > 250) { doc.addPage(); y = 20; }
+    y += 5;
+    doc.setFillColor(255,243,205);
+    doc.rect(M, y, W-2*M, 14, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(120,90,10);
+    const disc2 = es
+      ? 'AVISO: Este inventario fue elaborado con EIP·SCOPE (GEIPP-ONUDI) y no ha sido verificado por terceros. Para certificación ISO 14064-3 contacte un organismo acreditado.'
+      : 'DISCLAIMER: This inventory was prepared using EIP·SCOPE (GEIPP-UNIDO) and has not been third-party verified. For ISO 14064-3 certification contact an accredited body.';
+    const discLines2 = doc.splitTextToSize(disc2, W-2*M-6);
+    doc.text(discLines2, M+3, y+6);
+
+    // Footer
+    doc.setFillColor(2,62,138);
+    doc.rect(0, 285, W, 12, 'F');
+    doc.setTextColor(180,210,240);
+    doc.setFontSize(7);
+    doc.text('EIP·SCOPE · GEIPP-ONUDI/UNIDO · j.salazarespitia@unido.org · Juan David Salazar Espitia — Technical Coordinator LAC', W/2, 291, {align:'center'});
+    doc.text(`${compName} | ${parkData.name||'Park'} | ${parkData.year||'2024'}`, W/2, 296, {align:'center'});
+
+    doc.save(`EIP-SCOPE_${compName.replace(/\s/g,'_')}_${parkData.year||'2024'}_${pdfLang.toUpperCase()}.pdf`);
+  }
+  // Show survey after PDF download
+  document.getElementById('survey-section').classList.add('visible');
+}
+
+// ==================== SURVEY ====================
+function renderSurvey() {
+  const container = document.getElementById('survey-questions');
+  if (!container) return;
+  container.innerHTML = SURVEY_QS[lang].map((q,i) => `
+    <div class="survey-q">
+      <div class="survey-q-text">${i+1}. ${q}</div>
+      <div class="survey-stars">
+        ${[1,2,3,4,5].map(s => `<button class="star-btn ${surveyAnswers[i]>=s?'active':''}" onclick="rateSurvey(${i},${s})">${s}⭐</button>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function rateSurvey(q, val) {
+  surveyAnswers[q] = val;
+  renderSurvey();
+}
+
+function submitSurvey() {
+  const comment = document.getElementById('survey-comment').value;
+  const subject = encodeURIComponent('EIP·SCOPE — User Feedback');
+  const body = encodeURIComponent(
+    `EIP·SCOPE User Feedback\n\nPark: ${parkData.name||'N/A'}\nYear: ${parkData.year||'N/A'}\n\n` +
+    SURVEY_QS['en'].map((q,i) => `${q}: ${surveyAnswers[i]}/5`).join('\n') +
+    `\n\nComments:\n${comment}`
+  );
+  window.open(`mailto:j.salazarespitia@unido.org?subject=${subject}&body=${body}`);
+  document.getElementById('survey-thanks').style.display = 'block';
+}
+
+// ==================== DEMO DATA ====================
+function loadDemo() {
+  document.getElementById('demo-banner').classList.add('visible');
+  document.getElementById('instructions-section').style.display = 'none';
+  document.getElementById('progress-bar').style.display = 'block';
+
+  parkData = {
+    name: lang==='es' ? 'Parque Industrial Demostración PEI' : 'EIP Demo Industrial Park',
+    year: '2024', total: 20, reporting: 5,
+    reason: lang==='es' ? 'Las 15 empresas restantes están en proceso de vinculación al programa de monitoreo.' : 'The remaining 15 companies are in the process of joining the monitoring program.',
+    country: selectedCountry
+  };
+
+  document.getElementById('parkName').value = parkData.name;
+  document.getElementById('reportYear').value = '2024';
+  document.getElementById('totalEmpresas').value = '20';
+  document.getElementById('reportingEmpresas').value = '5';
+  document.getElementById('reasonNoReport').value = parkData.reason;
+  selectCountry(selectedCountry);
+
+  empresas = [
+    { id:0, name:'Alimentos Frescos S.A.', sector:0, employees:'280', area:'8500', elec:'1850000', gas:'42000', diesel:'8500', gasolina:'', glp:'', carbon:'', fueloil:'', alc3_transport:'185000', alc3_residuos:'85', cert:'1', prodUnit:'Tonelada de producto', prodVol:'4200', solarPct:'15', expanded:true },
+    { id:1, name:'MetalTech Industrial', sector:4, employees:'145', area:'12000', elec:'3200000', gas:'', diesel:'18000', gasolina:'5000', glp:'', carbon:'125000', fueloil:'', alc3_transport:'320000', alc3_residuos:'210', cert:'0', prodUnit:'Tonelada de metal procesado', prodVol:'850', solarPct:'0', expanded:false },
+    { id:2, name:'QuímicaVerde Ltda.', sector:2, employees:'95', area:'5200', elec:'980000', gas:'85000', diesel:'4200', gasolina:'', glp:'12000', carbon:'', fueloil:'8500', alc3_transport:'95000', alc3_residuos:'145', cert:'2', prodUnit:'Litros', prodVol:'2800000', solarPct:'25', expanded:false },
+    { id:3, name:'Logística Express', sector:6, employees:'320', area:'18000', elec:'450000', gas:'', diesel:'95000', gasolina:'28000', glp:'', carbon:'', fueloil:'', alc3_transport:'2850000', alc3_residuos:'42', cert:'6', prodUnit:'Ton-km', prodVol:'18500000', solarPct:'0', expanded:false },
+    { id:4, name:'DataCenter LAC', sector:9, employees:'45', area:'2800', elec:'8500000', gas:'', diesel:'12000', gasolina:'', glp:'', carbon:'', fueloil:'', alc3_transport:'8500', alc3_residuos:'12', cert:'3', prodUnit:'TB almacenados', prodVol:'8500', solarPct:'30', expanded:false }
+  ];
+
+  document.getElementById('step1-section').style.display = 'none';
+  document.getElementById('step2-section').style.display = 'none';
+  setProgress(3);
+  resultsCalculated = true;
+  document.getElementById('results-section').classList.add('visible');
+  renderResults();
+  window.scrollTo({top: 0, behavior:'smooth'});
+}
+
+// ==================== UTILS ====================
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0.00';
+  return parseFloat(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// Initialize
+setLang('es');
+renderSurvey();
+</script>
+</body>
+</html>
